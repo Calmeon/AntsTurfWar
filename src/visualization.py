@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pygame
 
@@ -17,6 +19,8 @@ class Visualization:
         self.gridCols = np.arange(0, SCREENSIZE[0] + 1, FIELDSIZE)
         self.gridRows = np.arange(0, SCREENSIZE[1] + 1, FIELDSIZE)
 
+        self.font = pygame.font.Font(None, FONTSIZE)
+
         self.calculateCords()
         self.initSim()
 
@@ -28,6 +32,28 @@ class Visualization:
                     (col + 1) * FIELDSIZE - FIELDSIZE / 2,
                     (row + 1) * FIELDSIZE - FIELDSIZE / 2,
                 ]
+
+    def randField(self):
+        size = self.gridCords.shape[:2]
+        return (random.randint(0, size[1] - 1), random.randint(0, size[0] - 1))
+
+    def initSim(self):
+        size = self.gridCords.shape[:2]
+        self.sim = Simulation(size)
+        size = np.array(size)
+        center = size // 2
+
+        redColony = self.sim.addColony("red")
+        self.sim.placeNest(redColony, center)
+        self.sim.placeNest(redColony, size - 1)
+
+        blueColony = self.sim.addColony("blue")
+        self.sim.placeNest(blueColony, self.randField())
+
+        yellowColony = self.sim.addColony("yellow")
+        self.sim.placeNest(yellowColony, self.randField())
+        self.sim.placeNest(yellowColony, self.randField())
+        self.sim.placeNest(yellowColony, self.randField())
 
     def drawGrid(self):
         for col in self.gridCols:
@@ -42,7 +68,10 @@ class Visualization:
                 # draw ants
                 if isinstance(curr, Ant):
                     pygame.draw.circle(
-                        self.screen, ANTCOLOR, self.gridCords[row, col], ANTSIZE / 2
+                        self.screen,
+                        curr.color,
+                        self.gridCords[row, col],
+                        ANTSIZE / 2,
                     )
                 # draw nests
                 if isinstance(curr, Nest):
@@ -50,13 +79,18 @@ class Visualization:
                     x = center[0] - ANTSIZE / 2
                     y = center[1] - ANTSIZE / 2
                     pygame.draw.rect(
-                        self.screen, curr.color, pygame.Rect(x, y, ANTSIZE, ANTSIZE)
+                        self.screen,
+                        curr.color,
+                        pygame.Rect(x, y, ANTSIZE, ANTSIZE),
                     )
 
-    def initSim(self):
-        self.sim = Simulation(self.gridCords.shape[:2])
-        center = tuple(np.array(self.gridCords.shape[:2]) // 2)
-        self.sim.placeNest("red", center)
+    def drawStats(self):
+        textHeight = 0
+        for colony in self.sim.colonies:
+            statsText = colony.color + " colony: " + str(colony.noAnts) + " ants"
+            text = self.font.render(statsText, True, colony.color)
+            self.screen.blit(text, (0, textHeight))
+            textHeight += FONTSIZE
 
     def mainLoop(self):
         running = True
@@ -65,9 +99,10 @@ class Visualization:
                 if event.type == pygame.QUIT:
                     running = False
 
-            self.screen.fill("white")
+            self.screen.fill(BACKGROUNDCOLOR)
             self.drawGrid()
             self.drawAnts()
+            self.drawStats()
 
             self.sim.simulate()
 

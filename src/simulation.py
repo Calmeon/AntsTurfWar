@@ -3,19 +3,30 @@ import random
 import numpy as np
 
 from ant import Ant
+from colony import Colony
 from nest import Nest
 
 
 class Simulation:
     def __init__(self, size):
         self.grid = np.empty(size, dtype=object)
+        self.colonies = []
         self.nestsPos = []
 
     """Creation functions"""
 
-    def placeNest(self, color, place=(0, 0)):
+    def addColony(self, color):
+        for colony in self.colonies:
+            if colony.color == color:
+                return None
+        newColony = Colony(color)
+        self.colonies.append(newColony)
+        return newColony
+
+    def placeNest(self, colony, place):
+        place = tuple(place)
         if self.grid[place] is None:
-            self.grid[place] = Nest(color)
+            self.grid[place] = Nest(colony)
             self.nestsPos.append(place)
 
     def getAvalibleFields(self, fieldRow, fieldCol):
@@ -37,12 +48,13 @@ class Simulation:
     """Transition functions"""
 
     def breed(self, moved=[]):
+        random.shuffle(self.nestsPos)
         for nest in self.nestsPos:
             avalibleFields = self.getAvalibleFields(nest[0], nest[1])
             for field in avalibleFields:
                 if np.random.random() < self.grid[nest].breedChance:
-                    self.grid[field] = Ant()
-                    self.grid[nest].antsCount += 1
+                    self.grid[field] = Ant(self.grid[nest])
+                    self.grid[nest].noAnts += 1
                     moved.append(self.grid[field])
         return moved
 
