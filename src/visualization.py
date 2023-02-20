@@ -38,24 +38,25 @@ class Visualization:
     def drawAnts(self):
         for row in range(self.sim.grid.shape[0]):
             for col in range(self.sim.grid[row].size):
+                curr = self.sim.grid[row, col]
                 # draw ants
-                if isinstance(self.sim.grid[row, col], Ant):
+                if isinstance(curr, Ant):
                     pygame.draw.circle(
                         self.screen, ANTCOLOR, self.gridCords[row, col], ANTSIZE / 2
                     )
                 # draw nests
-                if isinstance(self.sim.grid[row, col], Nest):
+                if isinstance(curr, Nest):
                     center = self.gridCords[row, col]
                     x = center[0] - ANTSIZE / 2
                     y = center[1] - ANTSIZE / 2
                     pygame.draw.rect(
-                        self.screen, "red", pygame.Rect(x, y, ANTSIZE, ANTSIZE)
+                        self.screen, curr.color, pygame.Rect(x, y, ANTSIZE, ANTSIZE)
                     )
 
     def initSim(self):
         self.sim = Simulation(self.gridCords.shape[:2])
         center = tuple(np.array(self.gridCords.shape[:2]) // 2)
-        self.sim.placeNest(center)
+        self.sim.placeNest("red", center)
 
     def mainLoop(self):
         running = True

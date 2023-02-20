@@ -13,54 +13,52 @@ class Simulation:
 
     """Creation functions"""
 
-    def placeNest(self, place=(0, 0)):
+    def placeNest(self, color, place=(0, 0)):
         if self.grid[place] is None:
-            self.grid[place] = Nest()
+            self.grid[place] = Nest(color)
             self.nestsPos.append(place)
+
+    def getAvalibleFields(self, fieldRow, fieldCol):
+        """returns free fields in neigboorhood"""
+        avalibleFields = []
+        for vectorRow in -1, 0, 1:
+            for vectorCol in -1, 0, 1:
+                (row, col) = (fieldRow + vectorRow, fieldCol + vectorCol)
+                # don't include field and look for edges
+                if (
+                    (row, col) != (fieldRow, fieldCol)
+                    and row in range(self.grid.shape[0])
+                    and col in range(self.grid.shape[1])
+                    and self.grid[row, col] is None
+                ):
+                    avalibleFields.append((row, col))
+        return avalibleFields
 
     """Transition functions"""
 
     def breed(self, moved=[]):
         for nest in self.nestsPos:
-            for vectorRow in -1, 0, 1:
-                for vectorCol in -1, 0, 1:
-                    row, col = (nest[0] + vectorRow, nest[1] + vectorCol)
-                    # don't place on top of the nest
-                    # and look for edges
-                    if (
-                        (row, col) != nest
-                        and row in range(self.grid.shape[0])
-                        and col in range(self.grid.shape[1])
-                    ):
-                        if (
-                            self.grid[row, col] is None
-                            and np.random.random() < self.grid[nest].breedChance
-                        ):
-                            self.grid[row, col] = Ant()
-                            self.grid[nest].antsCount += 1
-                            moved.append(self.grid[row, col])
+            avalibleFields = self.getAvalibleFields(nest[0], nest[1])
+            for field in avalibleFields:
+                if np.random.random() < self.grid[nest].breedChance:
+                    self.grid[field] = Ant()
+                    self.grid[nest].antsCount += 1
+                    moved.append(self.grid[field])
         return moved
 
     def move(self, moved=[]):
-        for fieldRow in range(self.grid.shape[0]):
-            for fieldCol in range(self.grid.shape[1]):
+        shuffledRows = list(range(self.grid.shape[0]))
+        random.shuffle(shuffledRows)
+        shuffledCols = list(range(self.grid.shape[1]))
+        random.shuffle(shuffledCols)
+
+        for fieldRow in shuffledRows:
+            for fieldCol in shuffledCols:
                 if (
                     isinstance(self.grid[fieldRow, fieldCol], Ant)
                     and self.grid[fieldRow, fieldCol] not in moved
                 ):
-                    avalibleMoves = []
-                    for vectorRow in -1, 0, 1:
-                        for vectorCol in -1, 0, 1:
-                            (row, col) = (fieldRow + vectorRow, fieldCol + vectorCol)
-                            # don't place on top of the ant
-                            # and look for edges
-                            if (
-                                (row, col) != (fieldRow, fieldCol)
-                                and row in range(self.grid.shape[0])
-                                and col in range(self.grid.shape[1])
-                                and self.grid[row, col] is None
-                            ):
-                                avalibleMoves.append((row, col))
+                    avalibleMoves = self.getAvalibleFields(fieldRow, fieldCol)
                     # move
                     if len(avalibleMoves):
                         newField = random.choice(avalibleMoves)
