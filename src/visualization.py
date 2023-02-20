@@ -35,7 +35,7 @@ class Visualization:
 
     def randField(self):
         size = self.gridCords.shape[:2]
-        return (random.randint(0, size[1] - 1), random.randint(0, size[0] - 1))
+        return (random.randint(0, size[0] - 1), random.randint(0, size[1] - 1))
 
     def initSim(self):
         size = self.gridCords.shape[:2]
